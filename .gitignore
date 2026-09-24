@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+# dataset and heavy artefacts stay local
+data/
+outputs/cache/
+models/*.pt
+outputs/logs/

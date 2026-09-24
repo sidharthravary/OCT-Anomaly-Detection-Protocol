@@ -1,0 +1,9 @@
+data_root: "/path/to/NEH_UT_2021RetinalOCTDataset"   # user sets this
+output_dir: "outputs"
+seed: 42
+image_size: 224
+reserve_ablation_patients: true
+threshold_percentile: 95
+case_aggregation: "max"          # also report "mean" and "top5_mean" in the ablation
+bootstrap_iterations: 1000
+device: "auto"                   # cuda > mps > cpu

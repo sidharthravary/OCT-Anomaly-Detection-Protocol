@@ -1,0 +1,10 @@
+torch
+torchvision
+numpy
+pandas
+scikit-learn
+scikit-image
+Pillow
+matplotlib
+pyyaml
+tqdm
