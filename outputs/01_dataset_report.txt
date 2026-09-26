@@ -1,0 +1,193 @@
+==============================================================================
+01 DATASET CHECK
+==============================================================================
+source    : zip C:\Users\Sidharth\Downloads\Labeled Retinal Optical Coherence Tomography Dataset for Classification of Normal, Drusen, and CNV Cases.zip  ->  nested Labeled Retinal Optical Coherence Tomography Dataset for Classification of Normal, Drusen, and CNV Cases/NEH_UT_2021RetinalOCTDataset.zip
+class root: 'NEH_UT_2021RetinalOCTDataset'
+
+## 1. Patients (case folders) and images per class
+class   case_dirs  cases_w_images  expected  images  imgs/case
+------  ---------  --------------  --------  ------  ---------
+NORMAL  120        120             120       5696    47.5     
+DRUSEN  160        160             160       5869    36.7     
+CNV     161        161             161       5238    32.5     
+TOTAL              441             441       16803            
+NORMAL  images/case: min=25 median=60 mean=47.5 max=62
+        case numbers 1..120, non-numeric: none, gaps: none
+DRUSEN  images/case: min=10 median=31 mean=36.7 max=62
+        case numbers 1..160, non-numeric: none, gaps: none
+CNV     images/case: min=19 median=31 mean=32.5 max=62
+        case numbers 1..161, non-numeric: none, gaps: none
+Case numbers restart at 1 in every class folder -> patient_id must include the class.
+Non-image files under class folders: none
+
+## 2. Folder structure per case
+NORMAL: {'flat': 53, 'OD/OS: OD+OS': 67}
+DRUSEN: {'flat': 126, 'OD/OS: OD+OS': 34}
+CNV: {'flat': 149, 'OD/OS: OD+OS': 12}
+class   OD imgs  OS imgs  no eye folder
+------  -------  -------  -------------
+NORMAL  2052     2037     1607         
+DRUSEN  1036     1044     3789         
+CNV     366      364      4508         
+
+## 3. File extensions per class (format-shortcut check)
+class   .jpg  .tif
+------  ----  ----
+NORMAL  1830  3866
+DRUSEN  1092  4777
+CNV     638   4600
+  .jpg: NORMAL 51.4%, DRUSEN 30.7%, CNV 17.9%
+  .tif: NORMAL 29.2%, DRUSEN 36.1%, CNV 34.7%
+cases with >1 extension: 0 of 441
+  NORMAL cases by extension set: {'.jpg': 39, '.tif': 81}
+  DRUSEN cases by extension set: {'.jpg': 27, '.tif': 133}
+  CNV cases by extension set: {'.jpg': 21, '.tif': 140}
+
+## 4. B-scan label from filename vs. class folder
+stems matching '<digits>_<Label>': 16803 / 16803
+label spellings seen: {'Drusen': 4812, 'Normal': 8136, 'CNV': 3234, 'NOrmal': 221, 'DRusen': 176, 'drusen': 4, 'normal': 220}
+folder \ fname_label  cnv   drusen  normal  total
+--------------------  ----  ------  ------  -----
+NORMAL                0     29      5667    5696 
+DRUSEN                0     3740    2129    5869 
+CNV                   3234  1223    781     5238 
+NORMAL folder, non-normal filename label: 29 (PRD expects 29 drusen)
+DRUSEN+CNV folders, 'normal' filename label: 2910 (PRD expects 2,910)
+(class, case, eye, B-scan index) keys used by >1 file: 12 -> cases ['CNV/58', 'DRUSEN/59']
+
+## 5. Metadata files and data_information.csv
+found: Labeled Retinal Optical Coherence Tomography Dataset for Classification of Normal, Drusen, and CNV Cases/data_information.csv
+found: Labeled Retinal Optical Coherence Tomography Dataset for Classification of Normal, Drusen, and CNV Cases/read_data.py
+data_information.csv: 16822 rows, columns = ['Patient ID', 'Class', 'Eye', 'B-scan', 'Label', 'Directory']
+   Patient ID Class Eye  B-scan   Label             Directory
+0           1   CNV  OS       0  DRUSEN  CNV/1/000_Drusen.jpg
+1           1   CNV  OS       1  DRUSEN  CNV/1/001_Drusen.jpg
+2           1   CNV  OS       2  DRUSEN  CNV/1/002_Drusen.jpg
+3           1   CNV  OS       3  NORMAL  CNV/1/003_Normal.jpg
+4           1   CNV  OS       4  NORMAL  CNV/1/004_Normal.jpg
+5           1   CNV  OS       5  DRUSEN  CNV/1/005_Drusen.jpg
+6           1   CNV  OS       6  NORMAL  CNV/1/006_Normal.jpg
+7           1   CNV  OS       7  NORMAL  CNV/1/007_Normal.jpg
+  'Class': {'DRUSEN': 5878, 'NORMAL': 5696, 'CNV': 5248}
+  'Eye': {'OD': 8835, 'OS': 7987}
+  'Label': {'NORMAL': 8584, 'DRUSEN': 4998, 'CNV': 3240}
+Patient ID range per Class: CNV 1..161 (161 ids), DRUSEN 1..160 (160 ids), NORMAL 1..120 (120 ids)
+exact duplicate rows: 12
+distinct Directory values: 16810
+Directory values with no file: 7 ['DRUSEN/59/000_NOrmal.tif', 'DRUSEN/59/004_NOrmal.tif', 'DRUSEN/59/005_NOrmal.tif', 'DRUSEN/59/006_NOrmal.tif', 'DRUSEN/59/007_NOrmal.tif', 'DRUSEN/59/008_NOrmal.tif', 'DRUSEN/59/029_NOrmal.tif']
+  ... of which differ from another row only by letter case: 7 (lost on a case-insensitive filesystem)
+files with no Directory row: 0 []
+explained: 16822 rows - 12 duplicates - 7 missing = 16803 vs 16803 files
+CSV Label vs filename label disagreements: 0
+CSV Eye vs OD/OS folder disagreements: 0 (CSV gives an eye for all 16803 files, including flat folders)
+
+## 6. Image size, mode, readability and duplicates (every image, one sequential pass)
+class   ext   WxH      mode  images
+------  ----  -------  ----  ------
+CNV     .jpg  768x496  RGB   638   
+CNV     .tif  768x496  RGB   4600  
+DRUSEN  .jpg  768x496  RGB   1092  
+DRUSEN  .tif  768x496  RGB   4777  
+NORMAL  .jpg  768x496  RGB   1830  
+NORMAL  .tif  768x496  RGB   3866  
+unreadable: 0
+byte-identical duplicate groups: 118 (236 files)
+  spanning >1 case: 118   >1 class: 62   >1 label: 22
+  CNV/147/000_Drusen.tif | CNV/26/000_Drusen.tif
+  CNV/147/001_Drusen.tif | CNV/26/001_Drusen.tif
+  CNV/147/002_Drusen.tif | CNV/26/002_Drusen.tif
+  CNV/147/003_Drusen.tif | CNV/26/003_Drusen.tif
+  CNV/147/004_Drusen.tif | CNV/26/004_Drusen.tif
+  CNV/147/005_Drusen.tif | CNV/26/005_Drusen.tif
+  CNV/147/006_Drusen.tif | CNV/26/006_Drusen.tif
+  CNV/147/007_Drusen.tif | CNV/26/007_Drusen.tif
+  CNV/147/008_Drusen.tif | CNV/26/008_Drusen.tif
+  CNV/147/009_Drusen.tif | CNV/26/009_Drusen.tif
+  CNV/147/010_Drusen.tif | CNV/26/010_Drusen.tif
+  CNV/147/011_CNV.tif | CNV/26/011_CNV.tif
+  CNV/147/012_CNV.tif | CNV/26/012_CNV.tif
+  CNV/147/013_CNV.tif | CNV/26/013_CNV.tif
+  CNV/147/014_CNV.tif | CNV/26/014_CNV.tif
+  CNV/147/015_CNV.tif | CNV/26/015_CNV.tif
+  CNV/147/016_CNV.tif | CNV/26/016_CNV.tif
+  CNV/147/017_CNV.tif | CNV/26/017_CNV.tif
+  CNV/147/018_CNV.tif | CNV/26/018_CNV.tif
+  CNV/147/019_CNV.tif | CNV/26/019_CNV.tif
+  CNV/147/020_CNV.tif | CNV/26/020_CNV.tif
+  CNV/147/021_CNV.tif | CNV/26/021_CNV.tif
+  CNV/147/022_CNV.tif | CNV/26/022_CNV.tif
+  CNV/147/023_Drusen.tif | CNV/26/023_Drusen.tif
+  CNV/147/024_Drusen.tif | CNV/26/024_Drusen.tif
+
+## 7. 20 example paths per class (relative to class root)
+-- NORMAL
+   NORMAL/102/OD/024_Normal.tif
+   NORMAL/103/OD/002_Normal.jpg
+   NORMAL/103/OD/018_Normal.jpg
+   NORMAL/110/OS/011_Normal.tif
+   NORMAL/111/OS/010_Normal.tif
+   NORMAL/113/020_Normal.tif
+   NORMAL/115/OS/000_Normal.tif
+   NORMAL/119/OS/014_Normal.tif
+   NORMAL/22/011_Normal.tif
+   NORMAL/23/017_Normal.jpg
+   NORMAL/25/OS/001_Normal.jpg
+   NORMAL/27/009_Normal.jpg
+   NORMAL/32/OD/014_Normal.jpg
+   NORMAL/58/014_NOrmal.tif
+   NORMAL/71/002_Normal.jpg
+   NORMAL/77/OD/028_Normal.tif
+   NORMAL/84/OD/003_Normal.tif
+   NORMAL/85/OS/004_normal.tif
+   NORMAL/90/OD/001_Normal.jpg
+   NORMAL/96/OS/002_Normal.tif
+-- DRUSEN
+   DRUSEN/10/028_Drusen.jpg
+   DRUSEN/104/OS/006_Drusen.tif
+   DRUSEN/13/OS/001_Normal.jpg
+   DRUSEN/130/004_Drusen.tif
+   DRUSEN/139/000_Drusen.tif
+   DRUSEN/142/007_Normal.tif
+   DRUSEN/143/018_Normal.tif
+   DRUSEN/153/OS/013_Drusen.tif
+   DRUSEN/153/OS/015_Drusen.tif
+   DRUSEN/23/OD/010_Drusen.tif
+   DRUSEN/38/OD/010_Drusen.jpg
+   DRUSEN/38/OS/005_Normal.jpg
+   DRUSEN/43/011_Normal.tif
+   DRUSEN/64/OS/000_Drusen.tif
+   DRUSEN/68/009_DRusen.tif
+   DRUSEN/73/003_Drusen.tif
+   DRUSEN/86/OS/012_Drusen.tif
+   DRUSEN/96/OD/005_Drusen.tif
+   DRUSEN/96/OS/000_Normal.tif
+   DRUSEN/99/027_Drusen.tif
+-- CNV
+   CNV/107/014_CNV.tif
+   CNV/115/000_Normal.tif
+   CNV/118/021_CNV.tif
+   CNV/119/023_CNV.tif
+   CNV/120/006_CNV.tif
+   CNV/126/020_CNV.tif
+   CNV/16/003_CNV.tif
+   CNV/20/004_CNV.tif
+   CNV/3/OS/025_CNV.jpg
+   CNV/31/025_CNV.tif
+   CNV/35/024_CNV.tif
+   CNV/36/015_CNV.jpg
+   CNV/40/010_Drusen.tif
+   CNV/40/022_Drusen.tif
+   CNV/58/015_CNV.tif
+   CNV/75/023_Drusen.tif
+   CNV/78/OS/029_Normal.tif
+   CNV/91/005_Normal.tif
+   CNV/95/008_CNV.tif
+   CNV/97/004_CNV.tif
+
+## 8. Acceptance checks
+[PASS] cases per class = 120/160/161 -> 120/160/161
+[PASS] ~16.8k images -> 16803
+[PASS] NORMAL-folder abnormal labels = 29 (expect 29)
+[PASS] DRUSEN/CNV-folder normal labels = 2910 (expect 2,910)
+[PASS] unreadable files = 0
+[CHECK] duplicate images across cases = 118

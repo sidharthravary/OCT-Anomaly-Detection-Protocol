@@ -1,0 +1,7 @@
+patient_a,patient_b,identical_images,same_label,near_duplicates,scans_a,scans_b
+CNV-022,DRUSEN-069,31,9,0,31,31
+CNV-026,CNV-147,31,31,0,31,31
+DRUSEN-017,NORMAL-034,31,31,0,31,31
+DRUSEN-022,DRUSEN-083,25,25,0,25,25
+CNV-160,CNV-161,0,0,1,31,31
+CNV-161,DRUSEN-159,0,0,1,31,31

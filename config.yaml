@@ -1,4 +1,4 @@
-data_root: "/path/to/NEH_UT_2021RetinalOCTDataset"   # user sets this
+data_root: "C:/Users/Sidharth/Downloads/Labeled Retinal Optical Coherence Tomography Dataset for Classification of Normal, Drusen, and CNV Cases.zip"   # dataset folder, or the Mendeley zip (read in place)
 output_dir: "outputs"
 seed: 42
 image_size: 224
