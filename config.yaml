@@ -2,6 +2,7 @@ data_root: "C:/Users/Sidharth/Downloads/Labeled Retinal Optical Coherence Tomogr
 output_dir: "outputs"
 seed: 42
 image_size: 224
+roi_height: 352                  # retina crop height in rows (full 768 width); fits 98% of retinas (04)
 reserve_ablation_patients: true
 threshold_percentile: 95
 case_aggregation: "max"          # also report "mean" and "top5_mean" in the ablation

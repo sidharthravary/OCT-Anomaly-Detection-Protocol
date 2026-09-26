@@ -21,3 +21,13 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
    ablation_train/train, test/test. To be stated as a limitation in the report.
 5. **Seeding detail:** each class is shuffled with its own `default_rng(seed)`, so one class's split does
    not depend on the order in which classes are processed.
+
+## 2026-09-26 - preprocessing (step 3)
+
+6. **New config key `roi_height: 352`.** PRD section 7 asks for "a fixed-height window around the retina" without a
+   number. On a 1-in-25 sample, the detected retina (Otsu mask, 2nd-98th percentile of per-column top/bottom)
+   fits with an 8 px margin in 82.5% / 90.4% / 95.8% / 98.3% / 99.4% of images for heights 256 / 288 / 320 / 352 /
+   384. 352 rows x full width (768) is cropped, then resized to 224 x 224. Same height for every image, so the
+   crop scale carries no class information. Full run: 0% fallback; retina extends past the window in 0.4% of
+   NORMAL, 0.4% of DRUSEN and 1.7% of CNV images.
+7. **Scale bar blacked out** (rows 455-491, columns 0-85) before cropping, in every image.
