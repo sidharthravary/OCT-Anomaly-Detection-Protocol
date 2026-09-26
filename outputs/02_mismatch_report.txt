@@ -1,0 +1,24 @@
+02 MANIFEST - data_information.csv vs. filenames
+
+CSV rows: 16822; exact duplicate rows dropped: 12
+Directory values with conflicting rows: 0
+CSV rows whose file is missing: 7
+  DRUSEN/59/000_NOrmal.tif
+  DRUSEN/59/004_NOrmal.tif
+  DRUSEN/59/005_NOrmal.tif
+  DRUSEN/59/006_NOrmal.tif
+  DRUSEN/59/007_NOrmal.tif
+  DRUSEN/59/008_NOrmal.tif
+  DRUSEN/59/029_NOrmal.tif
+files without a CSV row: 0
+mismatches in label (CSV vs filename): 0
+mismatches in eye (CSV vs OD/OS folder): 0
+mismatches in patient number (CSV vs folder): 0
+mismatches in class (CSV vs folder): 0
+mismatches in B-scan index (CSV vs filename): 0
+
+images sharing identical bytes with another patient: 236 (kept, per decision; see outputs/logs/changes.md)
+  CNV-022 <-> DRUSEN-069
+  CNV-026 <-> CNV-147
+  DRUSEN-017 <-> NORMAL-034
+  DRUSEN-022 <-> DRUSEN-083

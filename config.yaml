@@ -7,3 +7,17 @@ threshold_percentile: 95
 case_aggregation: "max"          # also report "mean" and "top5_mean" in the ablation
 bootstrap_iterations: 1000
 device: "auto"                   # cuda > mps > cpu
+
+# Patients left out of the main experiment (EDA section 4: scan pasted small into a black
+# canvas, abnormal classes only -> layout shortcut). Scored separately as split "excluded".
+exclude_patients: ["CNV-159", "CNV-160", "CNV-161", "DRUSEN-157", "DRUSEN-158", "DRUSEN-159", "DRUSEN-160"]
+
+# Patients per class and split (PRD section 5, test reduced by the excluded patients).
+split_counts:                     # used when reserve_ablation_patients is true
+  NORMAL: {train: 84, val: 18, test: 18, ablation_train: 0}
+  DRUSEN: {train: 0, val: 40, test: 84, ablation_train: 32}
+  CNV:    {train: 0, val: 40, test: 86, ablation_train: 32}
+split_counts_no_reserve:          # original 30/70 val/test protocol
+  NORMAL: {train: 84, val: 18, test: 18, ablation_train: 0}
+  DRUSEN: {train: 0, val: 47, test: 109, ablation_train: 0}
+  CNV:    {train: 0, val: 47, test: 111, ablation_train: 0}
