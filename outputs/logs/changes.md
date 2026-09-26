@@ -31,3 +31,25 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
    crop scale carries no class information. Full run: 0% fallback; retina extends past the window in 0.4% of
    NORMAL, 0.4% of DRUSEN and 1.7% of CNV images.
 7. **Scale bar blacked out** (rows 455-491, columns 0-85) before cropping, in every image.
+
+## 2026-09-27 - models and evaluation (steps 4-7)
+
+8. **Hardware: training on CPU** (PyTorch 2.14 CPU build). The CUDA build did not fit on the disk (needs ~8 GB
+   free while installing). Same code runs on GPU when `device: auto` finds CUDA; results can differ slightly.
+9. **`nets.py` added** (not in the PRD layout): holds ConvAutoencoder, ConvVAE, ResNet18 feature extractor,
+   DeepSVDD and SSIM, so that training and scoring scripts share one definition.
+10. **AE decoder detail:** ConvTranspose 4x4 stride 2 blocks mirror the encoder; the 1x1 bottleneck (64 ch) is
+    mapped back to 256 ch by a 1x1 conv + LeakyReLU before the decoder.
+11. **svdd_ft BatchNorm:** BN layers stay in eval mode (ImageNet running statistics) with frozen affine
+    parameters. Their shifts act as bias terms, which Deep SVDD must avoid (Ruff et al. 2018). Early-stopping
+    patience for svdd_ft = 10 (PRD gives none).
+12. **VAE loss scale:** reconstruction term = squared error *summed* over pixels (not averaged), so it is on the
+    same scale as the KL summed over the 256 latent dims; with a per-pixel mean the KL term would dominate
+    and the VAE would collapse to the mean image. Early stopping uses the val loss at beta = 1 and only counts
+    from the end of the 10-epoch warm-up. `score` = per-pixel MSE (comparable to M1), `score_kl` = SSE + KL.
+13. **Excluded patients are scored** by 06/08/09 (split `excluded`) and reported in a separate table by 10.
+14. **Case-level primary threshold** = 95th percentile of val NORMAL patients' case scores (18 patients);
+    B-scan-level primary threshold = 95th percentile of val clean-normal B-scan scores.
+15. **Bootstrap** resamples test patients with replacement *within each class folder*, so every resample has
+    both normal and abnormal cases.
+16. **Optional `cache_dir` config key** (default `outputs/cache`) so the 843 MB cache can live outside OneDrive.

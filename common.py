@@ -80,6 +80,11 @@ def setup_logging(script_name, cfg):
     return logger
 
 
+def cache_dir(cfg):
+    """Preprocessed-image cache: config key `cache_dir`, default <output_dir>/cache."""
+    return Path(cfg.get("cache_dir") or Path(cfg["output_dir"]) / "cache")
+
+
 def require(path, hint):
     """Fail loudly if an input file from an earlier script is missing."""
     if not Path(path).exists():
@@ -191,7 +196,7 @@ class OCTDataset(Dataset):
     def __init__(self, cfg, frame, norm="unit", augment=False):
         if torch is None:
             sys.exit("ERROR: PyTorch is not installed (pip install -r requirements.txt).")
-        cache = Path(cfg["output_dir"]) / "cache"
+        cache = cache_dir(cfg)
         index = pd.read_csv(require(cache / "index.csv", "Run 04_preprocess.py first."))
         self.images = np.load(require(cache / "images.npy", "Run 04_preprocess.py first."), mmap_mode="r")
         row_of = dict(zip(index.image_path, index.row))
@@ -221,6 +226,32 @@ class OCTDataset(Dataset):
 
 
 # ------------------------------------------------------------- scoring
+SCORE_COLUMNS = ["image_path", "patient_id", "split", "class_folder", "bscan_label", "eye", "ext"]
+
+
+def scoring_frame(cfg):
+    """All B-scans that get anomaly scores: val and test (PRD), plus the excluded
+    layout-outlier patients (reported separately; script 10 keeps them out of the main table)."""
+    parts = [get_split_frame(cfg, s, pool="all") for s in ("val", "test", "excluded")]
+    return pd.concat(parts, ignore_index=True)[SCORE_COLUMNS]
+
+
+def val_summary(df, cfg, log, score_col="score"):
+    """Validation-only ROC-AUC / PR-AUC at B-scan and case level (test is never touched here)."""
+    from sklearn.metrics import average_precision_score, roc_auc_score
+    v = df[df.split == "val"]
+    y = v.bscan_label != "normal"
+    case = aggregate_case_scores(v, cfg["case_aggregation"], score_col=score_col)
+    yc = case.class_folder != "NORMAL"
+    log.info(f"VAL [{score_col}]  B-scan: ROC-AUC {roc_auc_score(y, v[score_col]):.3f}  "
+             f"PR-AUC {average_precision_score(y, v[score_col]):.3f}  (n={len(v)}, abnormal {y.mean():.0%})  |  "
+             f"case ({cfg['case_aggregation']}): ROC-AUC {roc_auc_score(yc, case[score_col]):.3f}  "
+             f"PR-AUC {average_precision_score(yc, case[score_col]):.3f}  (n={len(case)})")
+    for lab in ("drusen", "cnv"):
+        m = v.bscan_label.isin(["normal", lab])
+        log.info(f"    normal vs {lab:6s} B-scans: ROC-AUC {roc_auc_score(v[m].bscan_label == lab, v[m][score_col]):.3f}")
+
+
 def aggregate_case_scores(df, how="max", group_col="patient_id", score_col="score"):
     """Collapse B-scan scores to one score per case (patient by default).
 

@@ -30,7 +30,7 @@ from scipy import ndimage
 from skimage.filters import threshold_otsu
 from tqdm import tqdm
 
-from common import CLASSES, DataSource, load_config, load_manifest, set_seed, setup_logging
+from common import CLASSES, DataSource, cache_dir, load_config, load_manifest, set_seed, setup_logging
 
 SCALE_BAR = (slice(455, 492), slice(0, 86))   # rows, cols; EDA: colour confined to rows 463-483, cols 13-63
 MIN_COVERAGE = 0.3                             # share of columns that must contain retina
@@ -83,7 +83,7 @@ def main():
     set_seed(cfg["seed"])
     log = setup_logging("04_preprocess", cfg)
     out = Path(cfg["output_dir"])
-    cache, fig_dir = out / "cache", out / "figures"
+    cache, fig_dir = cache_dir(cfg), out / "figures"
     cache.mkdir(parents=True, exist_ok=True)
     fig_dir.mkdir(parents=True, exist_ok=True)
     size, roi_height = cfg["image_size"], cfg["roi_height"]
