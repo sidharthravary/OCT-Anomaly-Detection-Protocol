@@ -71,7 +71,8 @@ def thresholds(val, cfg):
 
 def evaluate(frame, thr):
     y, s = frame.y.values, frame.score.values
-    row = dict(n=len(frame), n_abnormal=int(y.sum()), roc_auc=roc_auc_score(y, s), pr_auc=average_precision_score(y, s))
+    row = dict(n=len(frame), n_abnormal=int(y.sum()), roc_auc=roc_auc_score(y, s), pr_auc=average_precision_score(y, s),
+               pr_auc_baseline=float(y.mean()))
     for name, t in thr.items():
         m = binary_metrics(y, s, t)
         row.update({f"{k}_{name}": v for k, v in m.items() if k not in ("tp", "fp", "fn", "tn")})
@@ -155,7 +156,7 @@ def main():
         if len(excl):
             excl_rows.append(dict(method=method, images=len(excl),
                                   flagged_at_primary=float((excl.score >= thr["bscan"]["primary"]).mean()),
-                                  median_score_percentile_vs_test=float(
+                                  mean_score_percentile_vs_test=float(
                                       (test.score.values[None] <= excl.score.values[:, None]).mean(1).mean() * 100)))
 
         # ablation: case aggregation
@@ -186,7 +187,8 @@ def main():
 
     tab = pd.DataFrame(rows)
     tab.to_csv(met / "comparison_table.csv", index=False)
-    show = tab[["method", "level", "n", "roc_auc", "roc_auc_ci", "pr_auc", "pr_auc_ci", "sensitivity_primary",
+    show = tab[["method", "level", "n", "roc_auc", "roc_auc_ci", "pr_auc", "pr_auc_ci", "pr_auc_baseline",
+                "sensitivity_primary",
                 "sensitivity_primary_ci", "specificity_primary", "precision_primary", "f1_primary",
                 "sens_drusen_primary", "sens_cnv_primary", "sensitivity_informed", "specificity_informed",
                 "f1_informed"]]
@@ -194,7 +196,9 @@ def main():
             f"Primary threshold = {cfg['threshold_percentile']}th percentile of val-normal scores; informed threshold "
             "= Youden's J on val. Case score = "
             f"`{cfg['case_aggregation']}` over the patient's B-scans. 95% CIs: {cfg['bootstrap_iterations']} bootstrap "
-            "resamples of test patients (within class folder). The excluded layout-outlier patients are not included.",
+            "resamples of test patients (within class folder). The excluded layout-outlier patients are not included. "
+            "`pr_auc_baseline` = share of abnormal items, i.e. the PR-AUC of a random scorer (about 0.90 at case "
+            "level, where 170 of 188 test patients are abnormal).",
             "", md(show)]
     (met / "comparison_table.md").write_text("\n".join(text), encoding="utf-8")
 
