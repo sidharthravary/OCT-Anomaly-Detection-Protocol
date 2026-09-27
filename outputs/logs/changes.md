@@ -63,3 +63,9 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
 19. **svdd_ft result kept as specified:** with the PRD hyperparameters its val mean distance shrinks to ~3e-4
     and it scores below svdd_frozen on validation (B-scan ROC-AUC 0.588 vs 0.649). Not tuned further, to keep
     the protocol fixed and avoid tuning on validation; reported as a finding (partial hypersphere collapse).
+20. **M4 MKD re-implemented from the paper** (`nets.py`, `12_train_mkd.py`) rather than adapting the official
+    repository. Critical layers: relu2_2, relu3_3, relu4_3, relu5_3 of ImageNet VGG-16; student = VGG-style,
+    thin intermediate convs (0.36 M parameters) ending each tapped block in the teacher's channel count;
+    lambda = 0.01; Adam 1e-3, batch 32, <= 100 epochs, patience 10 (PRD gives no MKD hyperparameters).
+    Forward passes use bfloat16 autocast: in float32 the teacher + student at batch 32 need 3.4 GB and spill
+    out of the 4 GB GPU (9.6 s/batch); the loss is computed in float32 (smoke-test loss 9.759 vs 9.751 fp32).

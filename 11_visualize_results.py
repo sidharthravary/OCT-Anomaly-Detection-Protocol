@@ -63,6 +63,18 @@ def anomaly_maps(method, pick, cfg, device):
         x_hat = out[0] if isinstance(out, tuple) else out
         res = ((x - x_hat) ** 2)[:, 0].cpu().numpy()
         return x[:, 0].cpu().numpy(), np.stack([ndimage.gaussian_filter(r, 2) for r in res])
+    if method == "mkd":
+        from nets import VGGStudent, VGGTeacher, mkd_map
+        student = VGGStudent().to(device).eval()
+        student.load_state_dict(torch.load(require(Path("models") / "mkd.pt", "run 12 first"),
+                                           map_location=device)["state_dict"])
+        teacher = VGGTeacher().to(device)
+        ds = OCTDataset(cfg, pick, norm="imagenet")
+        x = torch.stack([ds[k][0] for k in range(len(ds))]).to(device)
+        with torch.no_grad(), torch.autocast(device.type, dtype=torch.bfloat16, enabled=device.type == "cuda"):
+            fs, ft = student(x), teacher(x)
+        mean, std = torch.tensor(IMAGENET_MEAN).view(3, 1, 1), torch.tensor(IMAGENET_STD).view(3, 1, 1)
+        return (x.cpu() * std + mean)[:, 0].numpy(), mkd_map(fs, ft, x.shape[-2:]).cpu().numpy()
     # svdd_*: layer3 distance map of the frozen encoder (as in 08)
     from nets import ResNetFeatures
     centers = torch.load(require(Path("models") / "svdd_centers.pt", "run 07 first"), map_location=device)

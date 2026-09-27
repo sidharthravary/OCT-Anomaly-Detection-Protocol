@@ -144,6 +144,81 @@ class DeepSVDD(nn.Module):
         return self.head(l4.mean(dim=(2, 3)))
 
 
+# ------------------------------------------------------------------ MKD
+# Critical layers: last ReLU of VGG-16 blocks 2-5 (relu2_2, relu3_3, relu4_3, relu5_3).
+MKD_TAPS = (8, 15, 22, 29)                     # indices in torchvision vgg16().features
+MKD_TAP_CHANNELS = (128, 256, 512, 512)
+
+
+class VGGTeacher(nn.Module):
+    """Frozen ImageNet VGG-16; returns activations at the MKD critical layers."""
+
+    def __init__(self):
+        super().__init__()
+        from torchvision.models import VGG16_Weights, vgg16
+        self.features = vgg16(weights=VGG16_Weights.IMAGENET1K_V1).features[:MKD_TAPS[-1] + 1].eval()
+        for p in self.parameters():
+            p.requires_grad = False
+
+    def train(self, mode=True):
+        return super().train(False)
+
+    def forward(self, x):
+        outs = []
+        for i, layer in enumerate(self.features):
+            x = layer(x)
+            if i in MKD_TAPS:
+                outs.append(x)
+        return outs
+
+
+class VGGStudent(nn.Module):
+    """Smaller VGG-style student (Salehi et al. 2021): thin intermediate convs, but each tapped block ends in
+    a conv with the teacher's channel count so activations can be compared one-to-one."""
+
+    CFG = ((16, 64), (16, 128), (16, 16, 256), (16, 16, 512), (16, 16, 512))
+
+    def __init__(self):
+        super().__init__()
+        blocks, c_in = [], 3
+        for b, chans in enumerate(self.CFG):
+            layers = [] if b == 0 else [nn.MaxPool2d(2)]
+            for c in chans:
+                layers += [nn.Conv2d(c_in, c, 3, padding=1), nn.ReLU(inplace=True)]
+                c_in = c
+            blocks.append(nn.Sequential(*layers))
+        self.blocks = nn.ModuleList(blocks)
+
+    def forward(self, x):
+        outs = []
+        for b, block in enumerate(self.blocks):
+            x = block(x)
+            if b >= 1:                       # blocks 2-5 are the tapped ones
+                outs.append(x)
+        return outs
+
+
+def mkd_loss(student_feats, teacher_feats, lam=0.01):
+    """Per-sample L_val (mean squared distance) + lam * L_dir (1 - cosine), summed over the critical layers.
+    Computed in float32 even when the features come from a mixed-precision forward pass."""
+    student_feats = [f.float() for f in student_feats]
+    teacher_feats = [f.float() for f in teacher_feats]
+    val = sum(((s - t) ** 2).flatten(1).mean(1) for s, t in zip(student_feats, teacher_feats))
+    dirn = sum(1 - F.cosine_similarity(s.flatten(1), t.flatten(1), dim=1) for s, t in zip(student_feats, teacher_feats))
+    return val + lam * dirn
+
+
+def mkd_map(student_feats, teacher_feats, size):
+    """Anomaly map: per-location squared discrepancy, normalised per layer, upsampled and summed."""
+    total = 0
+    for s, t in zip(student_feats, teacher_feats):
+        s, t = s.float(), t.float()
+        d = ((s - t) ** 2).mean(1, keepdim=True)
+        total = total + F.interpolate(d / (d.flatten(1).mean(1).view(-1, 1, 1, 1) + 1e-8), size=size,
+                                      mode="bilinear", align_corners=False)
+    return total[:, 0]
+
+
 # ------------------------------------------------------------------ SSIM
 def _gaussian_window(size=11, sigma=1.5, device=None):
     ax = torch.arange(size, dtype=torch.float32, device=device) - (size - 1) / 2
