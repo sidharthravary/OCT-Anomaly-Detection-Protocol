@@ -16,6 +16,9 @@
 | vae | max | 0.706 | 0.963 |
 | vae | mean | 0.685 | 0.958 |
 | vae | top5_mean | 0.699 | 0.962 |
+| mkd | max | 0.641 | 0.953 |
+| mkd | mean | 0.615 | 0.947 |
+| mkd | top5_mean | 0.631 | 0.951 |
 
 ## Threshold choice (B-scan level)
 
@@ -35,6 +38,9 @@ The ORACLE row uses test labels and is shown only as an upper reference.
 | vae | primary (val p95) | 0.006 | 0.247 | 0.939 | 0.386 |
 | vae | informed (val Youden) | 0.004 | 0.539 | 0.710 | 0.637 |
 | vae | ORACLE (test Youden) | 0.004 | 0.572 | 0.682 | 0.658 |
+| mkd | primary (val p95) | 3.072 | 0.194 | 0.932 | 0.315 |
+| mkd | informed (val Youden) | 2.781 | 0.398 | 0.764 | 0.523 |
+| mkd | ORACLE (test Youden) | 2.541 | 0.658 | 0.521 | 0.689 |
 
 ## Score column
 
@@ -46,6 +52,7 @@ The ORACLE row uses test labels and is shown only as an upper reference.
 | svdd_ft | score | 0.574 | 0.547 |
 | vae | score | 0.668 | 0.706 |
 | vae | score_kl | 0.668 | 0.702 |
+| mkd | score | 0.628 | 0.641 |
 
 ## File format (B-scan level)
 
@@ -59,6 +66,8 @@ The ORACLE row uses test labels and is shown only as an upper reference.
 | svdd_ft | .tif | 5530 | 0.574 | 0.942 |
 | vae | .jpg | 1186 | 0.709 | 0.988 |
 | vae | .tif | 5530 | 0.675 | 0.973 |
+| mkd | .jpg | 1186 | 0.661 | 0.979 |
+| mkd | .tif | 5530 | 0.626 | 0.957 |
 
 ## Retraining ablations (13_ablation_retrain.py)
 
@@ -66,6 +75,12 @@ The ORACLE row uses test labels and is shown only as an upper reference.
 
 | model | setting | level | roc_auc | pr_auc | sensitivity | specificity |
 |---|---|---|---|---|---|---|
+| ae | main (patient split, clean pool) | bscan | 0.574 | 0.701 | 0.107 | 0.923 |
+| ae | main (patient split, clean pool) | case | 0.503 | 0.911 | 0.035 | 1.000 |
+| ae | expanded | bscan | 0.568 | 0.697 | 0.096 | 0.926 |
+| ae | expanded | case | 0.497 | 0.910 | 0.029 | 1.000 |
+| ae | naive | bscan | 0.598 | 0.703 | 0.052 | 0.957 |
+| ae | naive | case | 0.649 | 0.747 | 0.088 | 0.933 |
 | svdd_frozen | main (patient split, clean pool) | bscan | 0.672 | 0.815 | 0.230 | 0.970 |
 | svdd_frozen | main (patient split, clean pool) | case | 0.819 | 0.980 | 0.476 | 1.000 |
 | svdd_frozen | expanded | bscan | 0.671 | 0.814 | 0.228 | 0.971 |
@@ -83,3 +98,4 @@ Share of their B-scans above the primary B-scan threshold, and their mean percen
 | svdd_frozen | 208 | 0.995 | 96.561 |
 | svdd_ft | 208 | 1.000 | 99.912 |
 | vae | 208 | 0.933 | 90.402 |
+| mkd | 208 | 0.091 | 67.345 |
