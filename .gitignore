@@ -7,3 +7,4 @@ data/
 outputs/cache/
 models/*.pt
 outputs/logs/*.log
+*_demo*

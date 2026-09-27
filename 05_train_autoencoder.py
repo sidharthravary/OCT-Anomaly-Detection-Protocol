@@ -7,6 +7,8 @@ Adam lr 1e-3, batch 32, up to 100 epochs, patience 10 (PRD section 7).
   --loss mse       (default)  MSE
   --loss mse_ssim             0.5 * MSE + 0.5 * (1 - SSIM)   (PRD optional variant)
   --smoke                     2 epochs x 5 batches, writes models/ae_smoke.pt (pipeline check)
+  --demo N                    live demonstration: N full epochs on the real data, writes models/ae_demo.pt
+                              (the trained models/ae.pt and its log are left untouched)
 
 Outputs: models/ae.pt (or ae_<loss>.pt for the variant), outputs/metrics/ae_history.csv,
 outputs/figures/ae_loss.png
@@ -58,6 +60,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--loss", choices=["mse", "mse_ssim"], default="mse")
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--demo", type=int, metavar="N", help="train N epochs into models/ae_demo.pt")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -65,6 +68,8 @@ def main():
     tag = "ae" if args.loss == "mse" else f"ae_{args.loss}"
     if args.smoke:
         tag += "_smoke"
+    elif args.demo:
+        tag += "_demo"
     log = setup_logging(f"05_train_{tag}", cfg)
     device = get_device(cfg["device"])
     out = Path(cfg["output_dir"])
@@ -85,7 +90,7 @@ def main():
     log.info(f"parameters: {sum(p.numel() for p in model.parameters()):,}")
     opt = torch.optim.Adam(model.parameters(), lr=HP["lr"])
 
-    max_epochs, max_batches = (2, 5) if args.smoke else (HP["max_epochs"], None)
+    max_epochs, max_batches = (2, 5) if args.smoke else (args.demo or HP["max_epochs"], None)
     best, best_epoch, wait, hist = float("inf"), 0, 0, []
     ckpt = Path("models") / f"{tag}.pt"
     for epoch in range(1, max_epochs + 1):
@@ -99,7 +104,8 @@ def main():
             torch.save(dict(state_dict=model.state_dict(), epoch=epoch, val_loss=va, loss=args.loss, hp=HP), ckpt)
         else:
             wait += 1
-        log.info(f"epoch {epoch:3d}  train {tr:.6f}  val {va:.6f}  {time.time() - t0:5.1f}s" + ("  *" if improved else ""))
+        log.info(f"Epoch {epoch:3d}/{max_epochs}  train_loss={tr:.5f}  val_loss={va:.5f}  ({time.time() - t0:4.1f}s)"
+                 + ("  <- best so far, saved" if improved else ""))
         if wait >= HP["patience"]:
             log.info(f"early stop: no val improvement for {HP['patience']} epochs")
             break
