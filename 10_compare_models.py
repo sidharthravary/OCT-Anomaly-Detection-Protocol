@@ -204,6 +204,31 @@ def main():
            "The ORACLE row uses test labels and is shown only as an upper reference.", "", md(pd.DataFrame(abl_thr)), "",
            "## Score column", "", md(pd.DataFrame(abl_score)), "",
            "## File format (B-scan level)", "", md(pd.DataFrame(abl_fmt)), ""]
+    # retraining ablations (13_ablation_retrain.py): same evaluation, next to the main-experiment row
+    abl_files = sorted((out / "scores" / "ablation").glob("*_scores.csv"))
+    if abl_files:
+        rr = []
+        for f in abl_files:
+            tag = f.name[:-len("_scores.csv")]
+            base, variant = tag.rsplit("_", 1)
+            d = pd.read_csv(f)
+            for name, frame in (("main (patient split, clean pool)", pd.read_csv(out / "scores" / f"{base}_scores.csv")
+                                 if (out / "scores" / f"{base}_scores.csv").exists() else None), (variant, d)):
+                if frame is None:
+                    continue
+                v, t = frame[frame.split == "val"], frame[frame.split == "test"]
+                th, lvl = thresholds(v, cfg), level_frames(t, cfg)
+                for level in LEVELS:
+                    e = evaluate(lvl[level], th[level])
+                    rr.append(dict(model=base, setting=name, level=level, roc_auc=e["roc_auc"], pr_auc=e["pr_auc"],
+                                   sensitivity=e["sensitivity_primary"], specificity=e["specificity_primary"]))
+        rr = pd.DataFrame(rr).drop_duplicates(["model", "setting", "level"])
+        rr.to_csv(met / "ablations_retrain.csv", index=False)
+        abl += ["## Retraining ablations (13_ablation_retrain.py)", "",
+                "`expanded`: normal-labelled B-scans of the ablation_train DRUSEN/CNV patients added to training. "
+                "`naive`: image-level random split that ignores patients (leakage); its test set is a different "
+                "random subset of B-scans, so compare the size of the gain, not individual cells. Thresholds as in "
+                "the main table (primary, from each setting's own val).", "", md(rr), ""]
     if excl_rows:
         e = pd.DataFrame(excl_rows)
         e.to_csv(met / "excluded_patients.csv", index=False)

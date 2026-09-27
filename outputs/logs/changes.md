@@ -53,3 +53,7 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
 15. **Bootstrap** resamples test patients with replacement *within each class folder*, so every resample has
     both normal and abnormal cases.
 16. **Optional `cache_dir` config key** (default `outputs/cache`) so the 843 MB cache can live outside OneDrive.
+17. **`13_ablation_retrain.py` added** for the two section-8 ablations that need retraining (expanded normal pool,
+    naive image-level split). The naive split is saved once to `outputs/splits_naive.csv` (per-class image shares
+    equal to the patient split). Ablation scores go to `outputs/scores/ablation/` and are reported by 10 in a
+    separate table, never in the main comparison.
