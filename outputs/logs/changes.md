@@ -77,3 +77,10 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
 22. **svdd_ft retraining ablations not completed:** running them next to MKD slowed MKD from ~90 s to ~340 s per
     epoch, so they were stopped (expanded variant at epoch 9) to finish the main table by the deadline. The
     expanded-pool and naive-split ablations are reported for ae and svdd_frozen only.
+23. **TF32 disabled (2026-09-27, found by 14_audit.py).** PyTorch used TF32 (10-bit mantissa) for cuDNN convolutions
+    on the RTX 3050. svdd_ft distances (~3e-4) are differences of nearly equal numbers, so TF32 rounding moved them
+    by up to ~10% of their spread depending on batch size. `set_seed` now disables TF32; 08, 10 and 11 were re-run.
+    svdd_ft test ROC-AUC 0.574 -> 0.575 (B-scan), 0.547 -> 0.549 (case); svdd_frozen case CI lower bound 0.757 ->
+    0.755; everything else unchanged. Models trained on the GPU (VAE, MKD, ablations) were trained with TF32, which
+    affects training precision only, not the correctness of their scores (audit: re-scores match within 1e-4 of
+    the score spread).

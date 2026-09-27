@@ -13,8 +13,8 @@ Patient-level split (84 / 18 / 18 NORMAL patients, 0 / 40 / 84 DRUSEN, 0 / 40 / 
 | Method | B-scan ROC-AUC | B-scan PR-AUC (baseline 0.656) | Case ROC-AUC | Case PR-AUC (baseline 0.904) |
 |---|---|---|---|---|
 | M1 Convolutional autoencoder | 0.574 [0.520, 0.624] | 0.701 | 0.503 [0.358, 0.635] | 0.911 |
-| **M2 Deep SVDD, frozen ResNet18** | **0.672 [0.637, 0.709]** | **0.815** | **0.819 [0.757, 0.876]** | **0.980** |
-| M2 Deep SVDD, fine-tuned | 0.574 [0.539, 0.604] | 0.710 | 0.547 [0.398, 0.681] | 0.917 |
+| **M2 Deep SVDD, frozen ResNet18** | **0.672 [0.637, 0.709]** | **0.815** | **0.819 [0.755, 0.876]** | **0.980** |
+| M2 Deep SVDD, fine-tuned | 0.575 [0.539, 0.605] | 0.711 | 0.549 [0.400, 0.685] | 0.918 |
 | M3 Convolutional VAE | 0.668 [0.623, 0.717] | 0.802 | 0.706 [0.619, 0.789] | 0.963 |
 | M4 MKD (stopped at epoch 18) | 0.628 [0.581, 0.678] | 0.769 | 0.641 [0.539, 0.735] | 0.953 |
 

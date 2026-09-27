@@ -51,6 +51,10 @@ def set_seed(seed):
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
+        # full float32 on Ampere GPUs: TF32 (10-bit mantissa) made svdd_ft distances, which are tiny
+        # differences of nearly equal numbers, vary by ~10% of their spread between batch sizes
+        torch.backends.cudnn.allow_tf32 = False
+        torch.backends.cuda.matmul.allow_tf32 = False
 
 
 def get_device(pref="auto"):
