@@ -69,3 +69,11 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
     lambda = 0.01; Adam 1e-3, batch 32, <= 100 epochs, patience 10 (PRD gives no MKD hyperparameters).
     Forward passes use bfloat16 autocast: in float32 the teacher + student at batch 32 need 3.4 GB and spill
     out of the 4 GB GPU (9.6 s/batch); the loss is computed in float32 (smoke-test loss 9.759 vs 9.751 fp32).
+21. **MKD memory:** the first full MKD run stalled (27 min/epoch) because another application held GPU memory
+    and the batch-32 forward pass spilled into system RAM. It was stopped and restarted with micro-batches of
+    16 and 2-step gradient accumulation, which gives identical gradients to batch 32 (the student has no
+    BatchNorm; smoke-test loss unchanged). `--score-only` added so that, if MKD has not early-stopped by the
+    16:15 deadline, the best checkpoint so far is scored and the cut-off is recorded in the MKD log.
+22. **svdd_ft retraining ablations not completed:** running them next to MKD slowed MKD from ~90 s to ~340 s per
+    epoch, so they were stopped (expanded variant at epoch 9) to finish the main table by the deadline. The
+    expanded-pool and naive-split ablations are reported for ae and svdd_frozen only.

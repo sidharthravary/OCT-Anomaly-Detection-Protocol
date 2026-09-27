@@ -7,7 +7,8 @@ same loss at test time. Re-implemented from the paper (nets.py); same splits, ca
 so 10 / 11 pick it up automatically.
 
 Adam lr 1e-3, batch 32, up to 100 epochs, early stopping (patience 10) on the val-normal loss.
-Forward passes use bfloat16 autocast on CUDA (4 GB GPU); the loss is computed in float32.
+Forward passes use bfloat16 autocast on CUDA (4 GB GPU); the loss is computed in float32. Batches of 32 are
+built from 2 accumulated micro-batches of 16 (identical gradients: the student has no BatchNorm).
 
   --smoke   2 epochs x 5 batches, writes models/mkd_smoke.pt, no scoring
 
@@ -31,7 +32,8 @@ from common import (CLASSES, IMAGENET_MEAN, IMAGENET_STD, OCTDataset, get_device
                     scoring_frame, set_seed, setup_logging, val_summary)
 from nets import VGGStudent, VGGTeacher, mkd_loss, mkd_map
 
-HP = dict(lr=1e-3, batch_size=32, max_epochs=100, patience=10, lam=0.01)
+HP = dict(lr=1e-3, batch_size=32, micro_batch=16, max_epochs=100, patience=10, lam=0.01)
+ACCUM = HP["batch_size"] // HP["micro_batch"]
 
 
 def amp(device):
@@ -40,10 +42,14 @@ def amp(device):
 
 
 def run_epoch(student, teacher, loader, device, opt=None, max_batches=None):
+    """Loader yields micro-batches of 16; gradients are accumulated over ACCUM of them, which equals a batch
+    of 32 exactly because the student has no BatchNorm."""
     student.train(opt is not None)
     total, n = 0.0, 0
+    if opt is not None:
+        opt.zero_grad(set_to_none=True)
     for b, (x, _) in enumerate(loader):
-        if max_batches is not None and b >= max_batches:
+        if max_batches is not None and b >= max_batches * ACCUM:
             break
         x = x.to(device)
         with amp(device):
@@ -51,12 +57,13 @@ def run_epoch(student, teacher, loader, device, opt=None, max_batches=None):
                 t = teacher(x)
             with torch.set_grad_enabled(opt is not None):
                 feats = student(x)
-        loss = mkd_loss(feats, t, HP["lam"]).mean()
+        per_sample = mkd_loss(feats, t, HP["lam"])
         if opt is not None:
-            opt.zero_grad(set_to_none=True)
-            loss.backward()
-            opt.step()
-        total += loss.item() * len(x)
+            (per_sample.sum() / HP["batch_size"]).backward()
+            if (b + 1) % ACCUM == 0 or b + 1 == len(loader):
+                opt.step()
+                opt.zero_grad(set_to_none=True)
+        total += per_sample.sum().item()
         n += len(x)
     return total / n
 
@@ -64,6 +71,8 @@ def run_epoch(student, teacher, loader, device, opt=None, max_batches=None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--score-only", action="store_true",
+                    help="skip training; score with the best checkpoint in models/mkd.pt (e.g. after stopping early)")
     args = ap.parse_args()
     tag = "mkd_smoke" if args.smoke else "mkd"
 
@@ -79,9 +88,9 @@ def main():
 
     train_df, val_df = get_split_frame(cfg, "train"), get_split_frame(cfg, "val")
     g = torch.Generator().manual_seed(cfg["seed"])
-    train_dl = DataLoader(OCTDataset(cfg, train_df, norm="imagenet", augment=True), batch_size=HP["batch_size"],
+    train_dl = DataLoader(OCTDataset(cfg, train_df, norm="imagenet", augment=True), batch_size=HP["micro_batch"],
                           shuffle=True, generator=g, num_workers=0)
-    val_dl = DataLoader(OCTDataset(cfg, val_df, norm="imagenet"), batch_size=HP["batch_size"], num_workers=0)
+    val_dl = DataLoader(OCTDataset(cfg, val_df, norm="imagenet"), batch_size=HP["micro_batch"], num_workers=0)
     teacher, student = VGGTeacher().to(device), VGGStudent().to(device)
     log.info(f"device {device} | train {len(train_df)} | val {len(val_df)} | student params "
              f"{sum(p.numel() for p in student.parameters()):,} | {HP}")
@@ -89,7 +98,12 @@ def main():
 
     ckpt = Path("models") / f"{tag}.pt"
     best, best_epoch, wait, hist = float("inf"), 0, 0, []
-    for epoch in range(1, (2 if args.smoke else HP["max_epochs"]) + 1):
+    if args.score_only:
+        c = torch.load(ckpt, map_location=device)
+        best, best_epoch = c["val_loss"], c["epoch"]
+        log.info(f"--score-only: using {ckpt} from epoch {best_epoch} (val loss {best:.5f}); training history kept "
+                 f"from the interrupted run's log")
+    for epoch in range(1, 0 if args.score_only else (2 if args.smoke else HP["max_epochs"]) + 1):
         t0 = time.time()
         tr = run_epoch(student, teacher, train_dl, device, opt, mb)
         va = run_epoch(student, teacher, val_dl, device, None, mb)
@@ -105,7 +119,13 @@ def main():
             log.info(f"early stop: no val improvement for {HP['patience']} epochs")
             break
 
-    h = pd.DataFrame(hist)
+    h = pd.DataFrame(hist, columns=["epoch", "train_loss", "val_loss", "seconds"])
+    if args.score_only:   # rebuild the curve from the interrupted run's log
+        import re
+        rows = [dict(epoch=int(a), train_loss=float(b), val_loss=float(c), seconds=float(d)) for a, b, c, d in
+                re.findall(r"epoch\s+(\d+)\s+train ([\d.]+)\s+val ([\d.]+)\s+([\d.]+)s",
+                           (out / "logs" / "12_train_mkd_interrupted.log").read_text())]
+        h = pd.DataFrame(rows)
     h.to_csv(out / "metrics" / f"{tag}_history.csv", index=False)
     fig, ax = plt.subplots(figsize=(6, 3.2))
     ax.plot(h.epoch, h.train_loss, color="#2a78d6", linewidth=2, label="train (augmented)")
@@ -130,7 +150,7 @@ def main():
     df = scoring_frame(cfg)
     s = np.zeros(len(df))
     with torch.no_grad():
-        for x, i in DataLoader(OCTDataset(cfg, df, norm="imagenet"), batch_size=64, num_workers=0):
+        for x, i in DataLoader(OCTDataset(cfg, df, norm="imagenet"), batch_size=32, num_workers=0):
             x = x.to(device)
             with amp(device):
                 fs, ft = student(x), teacher(x)
