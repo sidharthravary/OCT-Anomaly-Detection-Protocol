@@ -57,3 +57,9 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
     naive image-level split). The naive split is saved once to `outputs/splits_naive.csv` (per-class image shares
     equal to the patient split). Ablation scores go to `outputs/scores/ablation/` and are reported by 10 in a
     separate table, never in the main comparison.
+18. **GPU from 2026-09-27 ~10:40:** after disk space was freed, a second environment `.venv-gpu` (PyTorch 2.14
+    +cu126, RTX 3050 4 GB) was added. M1 and svdd_ft were trained on CPU; scoring in 08, the VAE (09) and
+    everything after run on the GPU. The code is unchanged (`device: auto`).
+19. **svdd_ft result kept as specified:** with the PRD hyperparameters its val mean distance shrinks to ~3e-4
+    and it scores below svdd_frozen on validation (B-scan ROC-AUC 0.588 vs 0.649). Not tuned further, to keep
+    the protocol fixed and avoid tuning on validation; reported as a finding (partial hypersphere collapse).
