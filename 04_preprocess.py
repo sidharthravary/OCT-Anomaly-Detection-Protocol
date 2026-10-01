@@ -32,7 +32,7 @@ from tqdm import tqdm
 
 from common import CLASSES, DataSource, cache_dir, load_config, load_manifest, set_seed, setup_logging
 
-SCALE_BAR = (slice(455, 492), slice(0, 86))   # rows, cols; EDA: colour confined to rows 463-483, cols 13-63
+SCALE_BAR = (slice(430, 492), slice(0, 86))   # rows, cols; the bar spans rows 436-486, cols 10-55 (vertical stroke + text)
 MIN_COVERAGE = 0.3                             # share of columns that must contain retina
 MIN_SPAN = 60                                  # rows
 

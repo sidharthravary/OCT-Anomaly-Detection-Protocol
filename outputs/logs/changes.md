@@ -89,3 +89,8 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
     436-454, ~2 px wide) remains in crops that reach that low. It is identical in every class, so its effect on the
     results is expected to be small. `notebooks/04_preprocessing_colab.ipynb` masks rows 430-491. The cache and the
     trained models still use the original mask; re-running 04 and the models with the corrected mask is pending.
+25. **Pipeline re-run with the corrected mask (2026-10-01).** `04_preprocess.py` now masks rows 430-491 (item 24).
+    The cache was rebuilt and every model retrained and re-scored on the GPU in full float32 (TF32 off), via
+    `run_all.sh`: 04 -> 05/06 -> 07/08 -> 09 -> 12 -> 10/11 -> retraining ablations -> 10/11 -> 14. Differences from
+    the first run: M1 and svdd_ft are now trained on the GPU instead of the CPU; MKD trains to completion (it was
+    stopped at epoch 18); the svdd_ft retraining ablations are included. All earlier numbers are superseded.
