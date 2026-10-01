@@ -84,3 +84,8 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
     0.755; everything else unchanged. Models trained on the GPU (VAE, MKD, ablations) were trained with TF32, which
     affects training precision only, not the correctness of their scores (audit: re-scores match within 1e-4 of
     the score spread).
+24. **Scale-bar mask too small (found 2026-10-01).** Measured over many scans, the burned-in "200 um" bar spans rows
+    436-486, columns 10-55. `04_preprocess.py` masks rows 455-491, so the top of the bar's vertical stroke (rows
+    436-454, ~2 px wide) remains in crops that reach that low. It is identical in every class, so its effect on the
+    results is expected to be small. `notebooks/04_preprocessing_colab.ipynb` masks rows 430-491. The cache and the
+    trained models still use the original mask; re-running 04 and the models with the corrected mask is pending.
