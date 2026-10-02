@@ -94,3 +94,9 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
     `run_all.sh`: 04 -> 05/06 -> 07/08 -> 09 -> 12 -> 10/11 -> retraining ablations -> 10/11 -> 14. Differences from
     the first run: M1 and svdd_ft are now trained on the GPU instead of the CPU; MKD trains to completion (it was
     stopped at epoch 18); the svdd_ft retraining ablations are included. All earlier numbers are superseded.
+26. **MKD interrupted and resumed (2026-10-01/02).** During the re-run, MKD stopped after epoch 49 (val loss 2.01295)
+    because drive C: filled up while the checkpoint was being saved. After disk space was freed it was resumed with
+    `12_train_mkd.py --resume`: weights from the epoch-49 checkpoint, a fresh Adam state (the checkpoint stores no
+    optimizer state), same learning rate, epochs 50-100 with the same early stopping. The restart gives a one-epoch
+    bump (epoch 50 train loss 2.85, val 2.04). Epochs 1-49 are kept in `outputs/logs/12_train_mkd_part1.log` and merged
+    into `mkd_history.csv`; the loss figure marks the resume point.

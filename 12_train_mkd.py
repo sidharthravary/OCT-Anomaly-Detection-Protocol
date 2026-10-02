@@ -73,11 +73,17 @@ def main():
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--score-only", action="store_true",
                     help="skip training; score with the best checkpoint in models/mkd.pt (e.g. after stopping early)")
+    ap.add_argument("--resume", action="store_true",
+                    help="continue training from models/mkd.pt (weights only: Adam state restarts); the earlier "
+                         "log is kept as 12_train_mkd_part1.log and merged into the history")
     args = ap.parse_args()
     tag = "mkd_smoke" if args.smoke else "mkd"
 
     cfg = load_config()
     set_seed(cfg["seed"])
+    part1 = Path(cfg["output_dir"]) / "logs" / "12_train_mkd_part1.log"
+    if args.resume and not part1.exists():
+        part1.write_text((Path(cfg["output_dir"]) / "logs" / "12_train_mkd.log").read_text())
     log = setup_logging(f"12_train_{tag}", cfg)
     device = get_device(cfg["device"])
     out = Path(cfg["output_dir"])
@@ -103,7 +109,15 @@ def main():
         best, best_epoch = c["val_loss"], c["epoch"]
         log.info(f"--score-only: using {ckpt} from epoch {best_epoch} (val loss {best:.5f}); training history kept "
                  f"from the interrupted run's log")
-    for epoch in range(1, 0 if args.score_only else (2 if args.smoke else HP["max_epochs"]) + 1):
+    start = 1
+    if args.resume:
+        c = torch.load(ckpt, map_location=device)
+        student.load_state_dict(c["state_dict"])
+        best, best_epoch = c["val_loss"], c["epoch"]
+        start = best_epoch + 1
+        log.info(f"--resume: weights from {ckpt} (epoch {best_epoch}, val loss {best:.5f}); continuing at epoch {start} "
+                 f"with a fresh Adam state")
+    for epoch in range(start, 0 if args.score_only else (2 if args.smoke else HP["max_epochs"]) + 1):
         t0 = time.time()
         tr = run_epoch(student, teacher, train_dl, device, opt, mb)
         va = run_epoch(student, teacher, val_dl, device, None, mb)
@@ -126,11 +140,20 @@ def main():
                 re.findall(r"epoch\s+(\d+)\s+train ([\d.]+)\s+val ([\d.]+)\s+([\d.]+)s",
                            (out / "logs" / "12_train_mkd_interrupted.log").read_text())]
         h = pd.DataFrame(rows)
+    if args.resume:       # prepend the epochs from before the interruption
+        import re
+        rows = [dict(epoch=int(a), train_loss=float(b), val_loss=float(c), seconds=float(d)) for a, b, c, d in
+                re.findall(r"epoch\s+(\d+)\s+train ([\d.]+)\s+val ([\d.]+)\s+([\d.]+)s", part1.read_text())
+                if int(a) < start]
+        h = pd.concat([pd.DataFrame(rows), h], ignore_index=True)
     h.to_csv(out / "metrics" / f"{tag}_history.csv", index=False)
     fig, ax = plt.subplots(figsize=(6, 3.2))
     ax.plot(h.epoch, h.train_loss, color="#2a78d6", linewidth=2, label="train (augmented)")
     ax.plot(h.epoch, h.val_loss, color="#eb6834", linewidth=2, label="val normal")
     ax.axvline(best_epoch, color="#52514e", linewidth=1, linestyle="--")
+    if args.resume:
+        ax.axvline(start - 0.5, color="#eda100", linewidth=1, linestyle=":")
+        ax.text(start - 0.5, ax.get_ylim()[1], " resumed", va="top", fontsize=8, color="#52514e")
     ax.set_xlabel("epoch")
     ax.set_ylabel("L_val + 0.01 L_dir")
     ax.set_title("MKD student training curve", fontsize=10, loc="left")
