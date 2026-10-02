@@ -77,16 +77,22 @@ The ORACLE row uses test labels and is shown only as an upper reference.
 |---|---|---|---|---|---|---|
 | ae | main (patient split, clean pool) | bscan | 0.570 | 0.700 | 0.106 | 0.923 |
 | ae | main (patient split, clean pool) | case | 0.503 | 0.911 | 0.024 | 1.000 |
-| ae | expanded | bscan | 0.568 | 0.697 | 0.096 | 0.926 |
-| ae | expanded | case | 0.497 | 0.910 | 0.029 | 1.000 |
-| ae | naive | bscan | 0.598 | 0.703 | 0.052 | 0.957 |
-| ae | naive | case | 0.649 | 0.747 | 0.088 | 0.933 |
+| ae | expanded | bscan | 0.565 | 0.696 | 0.097 | 0.926 |
+| ae | expanded | case | 0.489 | 0.908 | 0.029 | 1.000 |
+| ae | naive | bscan | 0.595 | 0.701 | 0.052 | 0.957 |
+| ae | naive | case | 0.648 | 0.747 | 0.092 | 0.933 |
 | svdd_frozen | main (patient split, clean pool) | bscan | 0.672 | 0.815 | 0.235 | 0.970 |
 | svdd_frozen | main (patient split, clean pool) | case | 0.814 | 0.979 | 0.465 | 1.000 |
-| svdd_frozen | expanded | bscan | 0.671 | 0.814 | 0.228 | 0.971 |
-| svdd_frozen | expanded | case | 0.819 | 0.980 | 0.465 | 1.000 |
-| svdd_frozen | naive | bscan | 0.669 | 0.804 | 0.276 | 0.936 |
-| svdd_frozen | naive | case | 0.876 | 0.931 | 0.580 | 0.933 |
+| svdd_frozen | expanded | bscan | 0.672 | 0.815 | 0.232 | 0.972 |
+| svdd_frozen | expanded | case | 0.815 | 0.979 | 0.465 | 1.000 |
+| svdd_frozen | naive | bscan | 0.669 | 0.804 | 0.273 | 0.938 |
+| svdd_frozen | naive | case | 0.877 | 0.931 | 0.556 | 0.942 |
+| svdd_ft | main (patient split, clean pool) | bscan | 0.522 | 0.673 | 0.056 | 0.952 |
+| svdd_ft | main (patient split, clean pool) | case | 0.443 | 0.914 | 0.124 | 1.000 |
+| svdd_ft | expanded | bscan | 0.519 | 0.680 | 0.077 | 0.948 |
+| svdd_ft | expanded | case | 0.599 | 0.944 | 0.112 | 1.000 |
+| svdd_ft | naive | bscan | 0.581 | 0.723 | 0.169 | 0.918 |
+| svdd_ft | naive | case | 0.816 | 0.900 | 0.420 | 0.933 |
 
 ## Excluded layout-outlier patients (never in the main table)
 

@@ -12,14 +12,14 @@ Patient-level split (84 / 18 / 18 NORMAL patients, 0 / 40 / 84 DRUSEN, 0 / 40 / 
 
 | Method | B-scan ROC-AUC | B-scan PR-AUC (baseline 0.656) | Case ROC-AUC | Case PR-AUC (baseline 0.904) |
 |---|---|---|---|---|
-| M1 Convolutional autoencoder | 0.574 [0.520, 0.624] | 0.701 | 0.503 [0.358, 0.635] | 0.911 |
-| **M2 Deep SVDD, frozen ResNet18** | **0.672 [0.637, 0.709]** | **0.815** | **0.819 [0.755, 0.876]** | **0.980** |
-| M2 Deep SVDD, fine-tuned | 0.575 [0.539, 0.605] | 0.711 | 0.549 [0.400, 0.685] | 0.918 |
-| M3 Convolutional VAE | 0.668 [0.623, 0.717] | 0.802 | 0.706 [0.619, 0.789] | 0.963 |
-| M4 MKD (stopped at epoch 18) | 0.628 [0.581, 0.678] | 0.769 | 0.641 [0.539, 0.735] | 0.953 |
+| M1 Convolutional autoencoder | 0.570 [0.516, 0.621] | 0.700 | 0.503 [0.358, 0.634] | 0.911 |
+| **M2 Deep SVDD, frozen ResNet18** | **0.672 [0.638, 0.709]** | **0.815** | **0.814 [0.751, 0.872]** | **0.979** |
+| M2 Deep SVDD, fine-tuned | 0.522 [0.492, 0.553] | 0.673 | 0.443 [0.339, 0.549] | 0.914 |
+| M3 Convolutional VAE | **0.674 [0.628, 0.721]** | 0.807 | 0.722 [0.637, 0.801] | 0.965 |
+| M4 MKD (100 epochs) | 0.629 [0.584, 0.679] | 0.773 | 0.663 [0.566, 0.757] | 0.956 |
 
 At the primary threshold (95th percentile of validation-normal scores), frozen Deep SVDD detects 73% of CNV
-patients and 21% of Drusen patients at 100% specificity on the 18 NORMAL test patients.
+patients and 19% of Drusen patients at 100% specificity on the 18 NORMAL test patients.
 Full table: [outputs/metrics/comparison_table.md](outputs/metrics/comparison_table.md); ablations:
 [outputs/metrics/ablations.md](outputs/metrics/ablations.md).
 
@@ -27,15 +27,18 @@ Full table: [outputs/metrics/comparison_table.md](outputs/metrics/comparison_tab
 - **CNV is detectable, Drusen is not** (score distributions: `outputs/figures/score_distributions.png`).
   Drusen are small sub-retinal deposits that barely change global appearance; every method scores them
   like normal B-scans.
-- **Frozen ImageNet features beat everything trained on OCT.** Fine-tuning Deep SVDD with the one-class loss
-  partially collapsed the embedding (val mean distance ~3e-4) and lost the discriminative features.
+- **Frozen ImageNet features are the most reliable.** Frozen Deep SVDD is best per patient and ties the VAE per
+  B-scan. Fine-tuning Deep SVDD with the one-class loss collapses the embedding (val mean distance ~3e-4) and is
+  unstable: retrained on the GPU it fell to chance level (case ROC-AUC 0.443, previously 0.549).
 - **The autoencoder reconstructs lesions too well** (`outputs/figures/ae_heatmaps/`), so its residual is weak.
-  The VAE's constrained latent space avoids this and is close to frozen SVDD at B-scan level.
-- **Leakage inflates results:** an image-level random split raises frozen SVDD's case ROC-AUC from 0.819 to
-  0.876 (`ablations.md`, retraining ablations).
+  The VAE's constrained latent space avoids this: it is the best B-scan detector (0.674) and the best for CNV
+  slices (normal vs CNV validation ROC-AUC 0.908).
+- **Leakage inflates results for every model:** an image-level random split raises the case ROC-AUC of the
+  autoencoder from 0.503 to 0.648, frozen SVDD from 0.814 to 0.877 and fine-tuned SVDD from 0.443 to 0.816
+  (`ablations.md`, retraining ablations).
 - **Adding normal-labelled slices from diseased eyes** to training (expanded pool) changes nothing measurable.
 - **The 7 excluded layout-outlier patients** (a different export format, abnormal classes only) would be
-  flagged 93-100% of the time by SVDD and the VAE - a shortcut the exclusion keeps out of the main table.
+  flagged 82-100% of the time by SVDD, the VAE and MKD - a shortcut the exclusion keeps out of the main table.
 
 ## Data findings (EDA)
 
@@ -79,9 +82,10 @@ in place). Then run the scripts in numeric order from the project root. `03` ref
 
 - Single site and device; no external validation. Each B-scan is scored independently, without 3D context.
 - Duplicate patient folders were kept (4 pairs); one pair spans val and test.
-- M1 and fine-tuned M2 were trained on CPU, the rest on a 4 GB GPU. MKD was stopped at epoch 18 of up to 100
-  (validation loss still falling), so M4 is under-trained. The fine-tuned-SVDD retraining ablations were not
-  completed.
+- All models were trained on a 4 GB GPU in full float32. MKD was interrupted at epoch 49 (disk full) and resumed
+  from that checkpoint with a fresh optimizer state (`changes.md` item 26).
+- Fine-tuned Deep SVDD is unstable across retraining (see findings); only one run per model was made, so no
+  seed-to-seed spread is reported.
 - The score flags abnormality, not a specific disease: a screening aid, not a diagnosis.
 
 ## References
