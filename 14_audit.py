@@ -98,7 +98,7 @@ def rescore(cfg, name, frame, device):
     from nets import (ConvAutoencoder, ConvVAE, DeepSVDD, ResNetFeatures, VGGStudent, VGGTeacher, frozen_embedding,
                       kl_divergence, mkd_loss)
     norm = "unit" if name in ("ae", "vae") else "imagenet"
-    dl = DataLoader(OCTDataset(cfg, frame, norm=norm), batch_size=32, num_workers=0)
+    dl = DataLoader(OCTDataset(cfg, frame, norm=norm), batch_size=16, num_workers=0)
     extra = {}
     if name == "ae":
         net = ConvAutoencoder().to(device)
@@ -151,6 +151,8 @@ def audit_models(cfg, scores, device):
         v = d[d.split == "val"]
         pick = v.iloc[rng.choice(len(v), 96, replace=False)].reset_index(drop=True)
         s, extra = rescore(cfg, name, pick, device)
+        if device.type == "cuda":
+            torch.cuda.empty_cache()   # release this model before the next one (4 GB GPU, may be shared)
         if s is None:
             check(f"{name}: no reload rule", False, warn=True)
             continue
