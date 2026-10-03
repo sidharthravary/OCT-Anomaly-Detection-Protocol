@@ -1,0 +1,237 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "01  Dataset check",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "01_dataset_check.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "read-only inspection of the dataset zip (~2 min)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "01b EDA",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "01b_eda.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "full exploratory analysis + figures (~7 min)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "02  Build manifest",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "02_build_manifest.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "one row per B-scan, cross-checked with data_information.csv (~2 min)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "03  Patient split (refuses to overwrite)",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "03_split_data.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "shows the split is fixed: refuses without --force",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "04  Preprocess (rebuilds cache)",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "04_preprocess.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "retina crop + 224x224 cache for all images (~17 min)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "05  Train autoencoder - DEMO 3 epochs",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "05_train_autoencoder.py",
+        "--demo",
+        "3"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "live training demo, saves models/ae_demo.pt (~2 min)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "06  Score autoencoder",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "06_evaluate_autoencoder.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "scores val/test with models/ae.pt + heatmaps (~2 min)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "08  Score Deep SVDD",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "08_evaluate_deep_svdd.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "scores both SVDD variants + heatmaps (~2 min)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Mid-review validation metrics",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "mid_review_val_summary.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "accuracy/precision/recall/F1/AUC on validation (seconds)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "10  Test comparison table",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "10_compare_models.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "the only test-set evaluation, bootstrap CIs (~2 min)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "11  Result figures",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "11_visualize_results.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "ROC/PR, score distributions, heatmaps (~1 min)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "14  Audit",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv-gpu\\Scripts\\python.exe",
+      "args": [
+        "14_audit.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "83 checks: data, models, evaluation, repo (~3 min)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "FULL pipeline re-run (hours, overwrites models)",
+      "type": "shell",
+      "command": "bash run_all.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "detail": "04 -> all models -> 10/11 -> ablations -> audit (~10 h on the GPU)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}

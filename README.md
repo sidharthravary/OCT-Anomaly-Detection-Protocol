@@ -67,6 +67,17 @@ See [outputs/eda/eda_report.md](outputs/eda/eda_report.md) and `outputs/eda/figu
 
 `common.py` holds shared helpers (data access, splits, dataset, case aggregation); `nets.py` holds the networks.
 
+## Demo in VS Code
+
+1. Open the project folder in VS Code (File > Open Folder). `.vscode/settings.json` selects the `.venv-gpu` Python.
+2. **Walkthrough:** open `notebooks/project_walkthrough.ipynb`. It is saved with all outputs, so every stage is
+   visible immediately; **Run All** (kernel: `.venv-gpu`) re-runs everything live in about 3 minutes - dataset
+   checks, EDA, the leak-free split, preprocessing on a raw scan, a 2-epoch training demo, live scoring of three
+   test scans by all four models with heatmaps, validation and test results, ablations and the audit.
+3. **Individual stages:** Terminal > Run Task... lists every pipeline script (dataset check, EDA, manifest, split,
+   preprocessing, training demo, scoring, comparison, figures, audit, full re-run).
+4. **Colab:** `notebooks/04_preprocessing_colab.ipynb` runs the preprocessing step by step on Google Colab.
+
 ## Setup and running
 
 ```bash
