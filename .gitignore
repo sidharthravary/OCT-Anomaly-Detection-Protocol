@@ -9,3 +9,5 @@ models/*.pt
 outputs/logs/*.log
 *_demo*
 outputs/logs/stderr_*
+data_external/
+outputs/external/*.npy

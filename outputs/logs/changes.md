@@ -100,3 +100,15 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
     optimizer state), same learning rate, epochs 50-100 with the same early stopping. The restart gives a one-epoch
     bump (epoch 50 train loss 2.85, val 2.04). Epochs 1-49 are kept in `outputs/logs/12_train_mkd_part1.log` and merged
     into `mkd_history.csv`; the loss figure marks the resume point.
+
+## 2026-10-06 - external validation (not part of the main protocol)
+
+27. **Kermany external test set (`15_external_kermany.py`, branch `kermany-external`).** To compare with Aresta et al.
+    2025, the saved NEH models (no retraining) score the Kermany OCT test set (Mendeley rscbjbr9sj v3, CC BY 4.0;
+    1,000 central B-scans, 250 NORMAL / DRUSEN / CNV / DME, 635 patients, none shared with Kermany train). Only the
+    test images are fetched from the 8.4 GB archive, via HTTP range requests (`remote_zip.py`). Preprocessing is the
+    unchanged `04_preprocess.preprocess`; because 42% of Kermany images contain white edge wedges (registration
+    padding) that NEH never has, the main Kermany numbers use "harmonised" images (edge-connected near-white
+    components set to 0) and the raw-image result is reported alongside. A second score per model, "map-max" (max of
+    the Gaussian-smoothed anomaly map, as in Aresta et al.), is added; which score each model uses is decided on NEH
+    validation only. NEH thresholds are applied unchanged. Outputs: `outputs/external/`; the main tables are untouched.
