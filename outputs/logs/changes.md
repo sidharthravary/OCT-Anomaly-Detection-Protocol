@@ -112,3 +112,17 @@ Every deviation from the PRD is logged here (PRD section 10, guardrail 5).
     components set to 0) and the raw-image result is reported alongside. A second score per model, "map-max" (max of
     the Gaussian-smoothed anomaly map, as in Aresta et al.), is added; which score each model uses is decided on NEH
     validation only. NEH thresholds are applied unchanged. Outputs: `outputs/external/`; the main tables are untouched.
+
+## 2026-11-06 - improvements (still one-class; not part of the original protocol)
+
+28. **Patch-level detection, ensemble and slice smoothing (`16_patchcore.py`, `17_improvements_report.py`, branch
+    `improvements`).** Goal: better drusen detection without changing the one-class setting. (a) **M5 PatchCore-style**
+    detector: frozen ImageNet ResNet18 (no training); a memory bank (greedy k-centre coreset of 20,000 patches from
+    400,000 random candidates, seed 42) built only from the 3,998 clean-normal TRAIN B-scans; score = max of the
+    Gaussian-smoothed nearest-neighbour distance map on a 28 x 28 patch grid. Two pre-registered feature variants
+    (layer2+3, layer1+2). (b) **Ensemble**: mean of per-model z-scores standardised by val clean-normal statistics
+    (no disease labels used for scaling); members chosen among {AE map-max, frozen SVDD, VAE map-max, MKD, PatchCore}.
+    (c) **Neighbouring-slice smoothing**: moving mean over 1 / 3 / 5 B-scans of the same eye. Every choice is made on
+    NEH validation B-scan ROC-AUC before the test set is read; all candidates are reported. Comparisons: Sotoudeh-Paima
+    et al. 2022 (supervised, same worst-case B-scan subset) and Aresta et al. 2025 (Kermany). Outputs:
+    `outputs/improvements/`. M1-M4 results and the main tables are untouched.

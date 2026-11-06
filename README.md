@@ -40,6 +40,35 @@ Full table: [outputs/metrics/comparison_table.md](outputs/metrics/comparison_tab
 - **The 7 excluded layout-outlier patients** (a different export format, abnormal classes only) would be
   flagged 82-100% of the time by SVDD, the VAE and MKD - a shortcut the exclusion keeps out of the main table.
 
+## Improvements after the main study (still one-class)
+
+Added later, outside the original protocol ([changes.md](outputs/logs/changes.md) items 27-28; full tables in
+[outputs/improvements/results.md](outputs/improvements/results.md) and
+[outputs/external/kermany_results.md](outputs/external/kermany_results.md)). Every model is still fitted on
+clean-normal train B-scans only, and every choice was made on validation before the test set was read.
+
+- **M5 PatchCore-style detector** (`16_patchcore.py`): frozen ResNet18 patch features, a memory bank of healthy
+  train patches, score = the most unusual patch. No training.
+- **Map-max scoring** (`15_external_kermany.py`): score = peak of the anomaly map instead of its average (Aresta et al.).
+- **Ensemble + neighbouring-slice smoothing** (`17_improvements_report.py`): z-scored models combined, then a 5-slice
+  moving mean within each eye.
+
+| Method (NEH test) | B-scan ROC-AUC | Drusen AUC | CNV AUC | Case ROC-AUC [95% CI] |
+|---|---|---|---|---|
+| Previous best (M2 frozen SVDD / M3 VAE) | 0.672 / 0.674 | 0.551 / 0.541 | 0.867 / 0.890 | 0.814 [0.751, 0.875] / 0.722 |
+| M5 PatchCore | 0.748 | 0.635 | 0.930 | 0.813 [0.724, 0.893] |
+| M5 PatchCore + slice smoothing | 0.777 | 0.666 | 0.955 | 0.803 [0.718, 0.881] |
+| **Ensemble + slice smoothing (val-chosen final)** | **0.771** | **0.661** | **0.947** | **0.834 [0.754, 0.904]** |
+
+**Comparison with published work.**
+- *Sotoudeh-Paima et al. 2022*, the NEH dataset paper: a supervised FPN-VGG16 trained with disease labels reaches
+  92.0% accuracy (sensitivity 91.8%, specificity 95.8%). On the same worst-case B-scan subset of our test patients,
+  our best one-class model reaches ROC-AUC 0.82, with sensitivity 0.44 at specificity 0.97. A model trained on the
+  diseases remains far better.
+- *Aresta et al. 2025* (label-free) on the Kermany test set: 0.87 overall, 0.70 on drusen. Our val-chosen PatchCore
+  reaches 0.855 overall and 0.727 on drusen. The other pre-registered variant (layer 2+3), not chosen on validation,
+  reaches 0.918.
+
 ## Data findings (EDA)
 
 See [outputs/eda/eda_report.md](outputs/eda/eda_report.md) and `outputs/eda/figures/`.
@@ -64,6 +93,10 @@ See [outputs/eda/eda_report.md](outputs/eda/eda_report.md) and `outputs/eda/figu
 | `10_compare_models.py` | the only script that computes test metrics; bootstrap CIs, ablations |
 | `11_visualize_results.py` | ROC / PR curves, score distributions, confusion matrices, heatmaps |
 | `13_ablation_retrain.py` | expanded-pool and naive-split ablations |
+| `14_audit.py` | automated checks of data, splits, saved models and metrics |
+| `15_external_kermany.py` | external test on Kermany (no retraining) + map-max scores |
+| `16_patchcore.py` | M5 patch-level nearest-neighbour detector (frozen ResNet18, no training) |
+| `17_improvements_report.py` | ensemble, slice smoothing, comparison with Sotoudeh-Paima 2022 and Aresta 2025 |
 
 `common.py` holds shared helpers (data access, splits, dataset, case aggregation); `nets.py` holds the networks.
 
